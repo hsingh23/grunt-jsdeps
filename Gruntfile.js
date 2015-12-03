@@ -30,12 +30,28 @@ module.exports = function(grunt) {
 
     // Configuration to be run (and then tested).
     jsdeps: {
-      web: {
+      simple: {
         options: {
           root: ".",
-          sourcePath: "test/fixtures/js",
+          sourcePath: "test/fixtures/simple",
           format: "json",
-          dest: "./dependency-tree.json"
+          dest: "./tmp/simple.json"
+        }
+      },
+      relativeRoot: {
+        options: {
+          root: "test/fixtures/",
+          sourcePath: "test/fixtures/simple",
+          format: "json",
+          dest: "./tmp/relativeRoot.json"
+        }
+      },
+      xml: {
+        options: {
+          root: ".",
+          sourcePath: "test/fixtures/simple",
+          format: "xml",
+          dest: "./tmp/simple.xml"
         }
       }
     },

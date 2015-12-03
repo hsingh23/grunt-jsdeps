@@ -1,0 +1,9 @@
+{
+  "/simple/a.js": [
+    "/simple/b.js",
+    "/simple/folder/c.js"
+  ],
+  "/simple/folder/c.js": [
+    "/simple/folder/d.js"
+  ]
+}
