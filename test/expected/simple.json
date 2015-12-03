@@ -1,0 +1,9 @@
+{
+  "/test/fixtures/simple/a.js": [
+    "/test/fixtures/simple/b.js",
+    "/test/fixtures/simple/folder/c.js"
+  ],
+  "/test/fixtures/simple/folder/c.js": [
+    "/test/fixtures/simple/folder/d.js"
+  ]
+}

@@ -8,7 +8,6 @@
 
  'use strict';
  var path = require("path");
- var fs = require("fs");
 
  var fsutil = require("./file-system-util");
 
@@ -27,7 +26,7 @@
           }
       }
       return res;
-  }
+  };
   var getReferences = function(absolutePath) {
     var file = grunt.file.read(absolutePath);
     return matchAll(file, REF_REGEX);
@@ -49,17 +48,17 @@
     }
 
     refs.forEach(function (x) {
-      if (!fs.existsSync(x)) {
+      if (!grunt.file.isFile(x)) {
         grunt.warn("'" + x + "'' cannot be not found\n(referenced from '" + absolutePath + "'')");
       }
     });
 
     depTree[getRootRelativePath(options.root, absolutePath)] = refs
-    .map(function (x) { return getRootRelativePath(options.root, x); });
+      .map(function (x) { return getRootRelativePath(options.root, x); });
   };
 
   var isDirectoryIgnored = function (absolutePath) {
-    return fs.existsSync(path.join(absolutePath, "jslignore.txt"));
+    return grunt.file.isFile(absolutePath, "jslignore.txt");
   };
 
   var formatXml = function(depTree) {
@@ -93,7 +92,7 @@
       format: "json",
       dest: "./dependency-tree.json"
     });
-  console.log(options);
+  grunt.verbose.subhead(options);
   var files = [];
   var depTree = {};
 
@@ -110,6 +109,6 @@
     grunt.fatal(ex.message + "\n");
     return -1;
   }
-  grunt.file.write(options.dest, options.xml ? formatXml(depTree) : formatJson(depTree));
+  grunt.file.write(options.dest, options.format==="xml" ? formatXml(depTree) : formatJson(depTree));
 });
 };

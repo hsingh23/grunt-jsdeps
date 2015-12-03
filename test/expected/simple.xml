@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<dependencies xmlns="http://schemas.vistaprint.com/VP.Cap.Dev.JavaScriptDependencies.Dependency.xsd">
+  <file path="/test/fixtures/simple/a.js">
+    <dependency>/test/fixtures/simple/b.js</dependency>
+    <dependency>/test/fixtures/simple/folder/c.js</dependency>
+  </file>
+  <file path="/test/fixtures/simple/folder/c.js">
+    <dependency>/test/fixtures/simple/folder/d.js</dependency>
+  </file>
+</dependencies>

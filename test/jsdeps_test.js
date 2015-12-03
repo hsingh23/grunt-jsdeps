@@ -1,7 +1,7 @@
 'use strict';
 
 var grunt = require('grunt');
-
+var runTask = require('grunt-run-task');
 /*
   ======== A Handy Little Nodeunit Reference ========
   https://github.com/caolan/nodeunit
@@ -27,22 +27,41 @@ exports.jsdeps = {
     // setup here if necessary
     done();
   },
-  default_options: function(test) {
+  simple: function(test) {
     test.expect(1);
-
-    var actual = grunt.file.read('tmp/default_options');
-    var expected = grunt.file.read('test/expected/default_options');
+    var actual = grunt.file.read('tmp/simple.json');
+    var expected = grunt.file.read('test/expected/simple.json');
     test.equal(actual, expected, 'should describe what the default behavior is.');
-
     test.done();
   },
-  custom_options: function(test) {
+  relativeRoot: function(test) {
     test.expect(1);
-
-    var actual = grunt.file.read('tmp/custom_options');
-    var expected = grunt.file.read('test/expected/custom_options');
-    test.equal(actual, expected, 'should describe what the custom option(s) behavior is.');
-
+    var actual = grunt.file.read('tmp/relativeRoot.json');
+    var expected = grunt.file.read('test/expected/relativeRoot.json');
+    test.equal(actual, expected, 'should describe what the default behavior is.');
     test.done();
   },
+  xml: function(test) {
+    test.expect(1);
+    var actual = grunt.file.read('tmp/simple.xml');
+    var expected = grunt.file.read('test/expected/simple.xml');
+    test.equal(actual, expected, 'should describe what the default behavior is.');
+    test.done();
+  }
+  // broken: function(test){
+  //   var task = runTask.task("jsdeps", {
+  //     broken: {
+  //       options: {
+  //         root: ".",
+  //         sourcePath: "test/fixtures/broken",
+  //         format: "json",
+  //         dest: "./tmp/broken.json"
+  //       }
+  //     }
+  //   });
+  //   task.run("broken", function done(err) {
+  //     console.log("DONE", err);
+  //   });
+  //   test.done();
+  // }
 };
