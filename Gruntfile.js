@@ -30,20 +30,12 @@ module.exports = function(grunt) {
 
     // Configuration to be run (and then tested).
     jsdeps: {
-      default_options: {
+      web: {
         options: {
-        },
-        files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
-      },
-      custom_options: {
-        options: {
-          separator: ': ',
-          punctuation: ' !!!'
-        },
-        files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
+          root: ".",
+          sourcePath: "test/fixtures/js",
+          format: "json",
+          dest: "./dependency-tree.json"
         }
       }
     },
