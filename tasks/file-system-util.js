@@ -8,7 +8,7 @@ var recurseDirSync = function (fullPath, fileProcessor, directoryProcessor) {
     if (fs.statSync(fullPath).isFile()) {
         fileProcessor(fullPath);
         return;
-    } 
+    }
 
     if (!directoryProcessor(fullPath)) {
         return;
@@ -23,7 +23,7 @@ var recurseDirSync = function (fullPath, fileProcessor, directoryProcessor) {
 var ensureParentDirectoryExists = function (filePath) {
 
     var parentDir = path.dirname(filePath);
-    if (parentDir == filePath) {
+    if (parentDir === filePath) {
         return;
     }
 
@@ -45,7 +45,7 @@ exports.copySync = function (sourceFile, targetFile) {
 // Convert windows separators to URL style
 exports.ensureUrlSeparators = function (filePath) {
     var sep = path.sep;
-    if (sep == "\\") {
+    if (sep === "\\") {
         return filePath.replace(/\\/gi, "/");
     }
 

@@ -6,9 +6,81 @@
  * Licensed under the MIT license.
  */
 
-'use strict';
+ 'use strict';
+ var path = require("path");
+ var fs = require("fs");
 
-module.exports = function(grunt) {
+ var fsutil = require("./file-system-util");
+
+ module.exports = function(grunt) {
+  var REF_REGEX = /\/\/\/\s*<reference\s+path\s*=\s*["'](.*?)["']/gim;
+  var matchAll = function(str, regex) {
+      var res = [];
+      var m;
+      if (regex.global) {
+          while (m = regex.exec(str)) {
+              res.push(m[1]);
+          }
+      } else {
+          if (m = regex.exec(str)) {
+              res.push(m[1]);
+          }
+      }
+      return res;
+  }
+  var getReferences = function(absolutePath) {
+    var file = grunt.file.read(absolutePath);
+    return matchAll(file, REF_REGEX);
+  };
+
+  var getRootRelativePath = function (root, absolutePath) {
+    return "/" + path.relative(root, absolutePath).replace(/\\/g, "/");
+  };
+
+  var processFile = function (absolutePath, options, depTree) {
+
+    var parentDirectory = path.dirname(absolutePath);
+
+    var refs = getReferences(absolutePath)
+    .map(function (x) { return path.resolve(parentDirectory, x); });
+
+    if (refs.length === 0) {
+      return;
+    }
+
+    refs.forEach(function (x) {
+      if (!fs.existsSync(x)) {
+        grunt.warn("'" + x + "'' cannot be not found\n(referenced from '" + absolutePath + "'')");
+      }
+    });
+
+    depTree[getRootRelativePath(options.root, absolutePath)] = refs
+    .map(function (x) { return getRootRelativePath(options.root, x); });
+  };
+
+  var isDirectoryIgnored = function (absolutePath) {
+    return fs.existsSync(path.join(absolutePath, "jslignore.txt"));
+  };
+
+  var formatXml = function(depTree) {
+    var xml = "<?xml version=\"1.0\"?>\n" +
+    "<dependencies xmlns=\"http://schemas.vistaprint.com/VP.Cap.Dev.JavaScriptDependencies.Dependency.xsd\">\n";
+
+    for (var f in depTree) {
+      xml += "  <file path=\"" + f + "\">\n";
+      /*jshint -W083 */
+      xml += depTree[f].map(function (x) { return "    <dependency>" + x + "</dependency>"; }).join("\n") + "\n";
+      xml += "  </file>\n";
+    }
+    xml += "</dependencies>\n";
+
+    return xml;
+  };
+
+  var formatJson = function(depTree) {
+    return JSON.stringify(depTree, null, 2) + "\n";
+  };
+
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
@@ -16,35 +88,28 @@ module.exports = function(grunt) {
   grunt.registerMultiTask('jsdeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options({
-      punctuation: '.',
-      separator: ', '
+      root: ".",
+      sourcePath: ".",
+      format: "json",
+      dest: "./dependency-tree.json"
     });
+  console.log(options);
+  var files = [];
+  var depTree = {};
 
-    // Iterate over all specified file groups.
-    this.files.forEach(function(f) {
-      // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files (if nonull was set).
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        } else {
-          return true;
-        }
-      }).map(function(filepath) {
-        // Read file source.
-        return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
-
-      // Handle options.
-      src += options.punctuation;
-
-      // Write the destination file.
-      grunt.file.write(f.dest, src);
-
-      // Print a success message.
-      grunt.log.writeln('File "' + f.dest + '" created.');
-    });
-  });
-
+  try {
+    fsutil.recurseDirSync(
+      options.sourcePath,
+      function (x) {
+        files.push(x);
+        processFile(x, options, depTree);
+      },
+      function (x) { return !isDirectoryIgnored(x); }
+      );
+  } catch (ex) {
+    grunt.fatal(ex.message + "\n");
+    return -1;
+  }
+  grunt.file.write(options.dest, options.xml ? formatXml(depTree) : formatJson(depTree));
+});
 };
