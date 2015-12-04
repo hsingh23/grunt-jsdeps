@@ -1,9 +1,15 @@
-{
-  "/test/fixtures/simple/a.js": [
-    "/test/fixtures/simple/b.js",
-    "/test/fixtures/simple/folder/c.js"
-  ],
-  "/test/fixtures/simple/folder/c.js": [
-    "/test/fixtures/simple/folder/d.js"
-  ]
-}
+[
+  {
+    "source": "/test/fixtures/simple/a.js",
+    "dependencies": [
+      "/test/fixtures/simple/b.js",
+      "/test/fixtures/simple/folder/c.js"
+    ]
+  },
+  {
+    "source": "/test/fixtures/simple/folder/c.js",
+    "dependencies": [
+      "/test/fixtures/simple/folder/d.js"
+    ]
+  }
+]
