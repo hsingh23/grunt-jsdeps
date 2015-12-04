@@ -1,9 +1,15 @@
-{
-  "/simple/a.js": [
-    "/simple/b.js",
-    "/simple/folder/c.js"
-  ],
-  "/simple/folder/c.js": [
-    "/simple/folder/d.js"
-  ]
-}
+[
+  {
+    "source": "/simple/a.js",
+    "dependencies": [
+      "/simple/b.js",
+      "/simple/folder/c.js"
+    ]
+  },
+  {
+    "source": "/simple/folder/c.js",
+    "dependencies": [
+      "/simple/folder/d.js"
+    ]
+  }
+]

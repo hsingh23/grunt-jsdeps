@@ -77,7 +77,13 @@
   };
 
   var formatJson = function(depTree) {
-    return JSON.stringify(depTree, null, 2) + "\n";
+    var formatedDepTree = [];
+    for (var dep in depTree) {
+      if( depTree.hasOwnProperty(dep) ) {
+        formatedDepTree.push({source: dep, dependencies: depTree[dep]});
+      }
+    }
+    return JSON.stringify(formatedDepTree, null, 2) + "\n";
   };
 
 
