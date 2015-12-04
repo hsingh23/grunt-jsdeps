@@ -1,6 +1,6 @@
 # grunt-jsdeps
 
-> Build a dependency tree from js files with microsoft type depenencies
+> Build a dependency tree from js files with microsoft type dependencies
 
 ## Getting Started
 This plugin requires Grunt `~0.4.5`
@@ -84,15 +84,21 @@ test/fixtures/simple/folder/c.js
 
 and the destination file looks like this:
 ```json
-{
-  "/test/fixtures/simple/a.js": [
-    "/test/fixtures/simple/b.js",
-    "/test/fixtures/simple/folder/c.js"
-  ],
-  "/test/fixtures/simple/folder/c.js": [
-    "/test/fixtures/simple/folder/d.js"
-  ]
-}
+[
+  {
+    "source": "/test/fixtures/simple/a.js",
+    "dependencies": [
+      "/test/fixtures/simple/b.js",
+      "/test/fixtures/simple/folder/c.js"
+    ]
+  },
+  {
+    "source": "/test/fixtures/simple/folder/c.js",
+    "dependencies": [
+      "/test/fixtures/simple/folder/d.js"
+    ]
+  }
+]
 ```
 
 #### Relative Root example
@@ -125,15 +131,21 @@ test/fixtures/simple/folder/c.js
 
 and the destination file looks like this:
 ```json
-{
-  "/simple/a.js": [
-    "/simple/b.js",
-    "/simple/folder/c.js"
-  ],
-  "/simple/folder/c.js": [
-    "/simple/folder/d.js"
-  ]
-}
+[
+  {
+    "source": "/simple/a.js",
+    "dependencies": [
+      "/simple/b.js",
+      "/simple/folder/c.js"
+    ]
+  },
+  {
+    "source": "/simple/folder/c.js",
+    "dependencies": [
+      "/simple/folder/d.js"
+    ]
+  }
+]
 
 ```
 
@@ -143,7 +155,7 @@ In this example the following options are used
 ```js
 grunt.initConfig({
   jsdeps: {
-    simple: {
+    xml: {
       options: {
         root: ".",
         sourcePath: "test/fixtures/simple",
