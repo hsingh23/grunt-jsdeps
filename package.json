@@ -1,7 +1,7 @@
 {
   "name": "grunt-jsdeps",
   "description": "Build a dependency tree from js files with microsoft type depenencies",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "homepage": "https://github.com/harsingh/grunt-jsdeps",
   "author": {
     "name": "Harsh Singh",
@@ -37,9 +37,10 @@
     "grunt": "~0.4.5"
   },
   "keywords": [
+    "grunt-jsdeps",
+    "jsdeps",
     "gruntplugin"
   ],
   "dependencies": {
-    "n-readlines": "^0.2.2"
   }
 }

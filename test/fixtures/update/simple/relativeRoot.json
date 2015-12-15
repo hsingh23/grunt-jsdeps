@@ -1,0 +1,9 @@
+[
+  {
+    "source": "/a.js",
+    "dependencies": [
+      "/b.js",
+      "/folder/c.js"
+    ]
+  }
+]
