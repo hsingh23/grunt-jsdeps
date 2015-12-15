@@ -1,7 +1,6 @@
 'use strict';
 
 var grunt = require('grunt');
-var runTask = require('grunt-run-task');
 /*
   ======== A Handy Little Nodeunit Reference ========
   https://github.com/caolan/nodeunit
@@ -22,7 +21,7 @@ var runTask = require('grunt-run-task');
     test.ifError(value)
 */
 
-exports.jsdeps = {
+exports.create_jsdeps = {
   setUp: function(done) {
     // setup here if necessary
     done();
@@ -48,20 +47,25 @@ exports.jsdeps = {
     test.equal(actual, expected, 'should describe what the default behavior is.');
     test.done();
   }
-  // broken: function(test){
-  //   var task = runTask.task("jsdeps", {
-  //     broken: {
-  //       options: {
-  //         root: ".",
-  //         sourcePath: "test/fixtures/broken",
-  //         format: "json",
-  //         dest: "./tmp/broken.json"
-  //       }
-  //     }
-  //   });
-  //   task.run("broken", function done(err) {
-  //     console.log("DONE", err);
-  //   });
-  //   test.done();
-  // }
+};
+
+exports.update_jsdeps = {
+  setUp: function(done) {
+    // setup here if necessary
+    done();
+  },
+  simple: function(test) {
+    test.expect(1);
+    var actual = grunt.file.read('tmp/update_simple.json');
+    var expected = grunt.file.read('test/expected/update_simple.json');
+    test.equal(actual, expected, 'should describe what the default behavior is.');
+    test.done();
+  },
+  relativeRoot: function(test) {
+    test.expect(1);
+    var actual = grunt.file.read('tmp/update_relativeRoot.json');
+    var expected = grunt.file.read('test/expected/update_relativeRoot.json');
+    test.equal(actual, expected, 'should describe what the default behavior is.');
+    test.done();
+  }
 };
