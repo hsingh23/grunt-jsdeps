@@ -28,7 +28,7 @@ grunt.initConfig({
     your_target: {
       // Target-specific file lists and/or options go here.
       options: {
-        root: ".", // from where the directory starts
+        pathPrefix: ".", // from where the directory starts
         sourcePath: "test/fixtures/simple", // dir where your js files are stored - they will be recursively scanned
         format: "json", // can also be xml
         dest: "./tmp/simple.json" // name of destination file or path to it
@@ -40,17 +40,49 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
+#### options.pathPrefix
 Type: `String`
-Default value: `',  '`
+Default value: `.`
 
-A string value that is used to do something with whatever.
+A string path of what to exclude when writing the path. For example: with pathPrefix = '/test/fixtures/simple/', the path "/test/fixtures/simple/b.js" will be written as "/b.js"
 
-#### options.punctuation
+
+#### options.sourcePath
 Type: `String`
-Default value: `'.'`
+Default value: `.`
 
-A string value that is used to do something else with whatever else.
+A string path of the root directory to scan to find js files
+
+
+#### options.format
+Type: `String`
+Default value: `json`
+
+Can be either json or xml. The xml option is not currently supported by the update multitask.
+
+
+#### options.dest
+Type: `String`
+Default value: `./dependency-tree.json`
+
+The place the output file is written.
+
+### Update Task comments
+
+The update task doesn't take a sourcePath, rather it takes a list of files that have changed. The `files.src` is a list of globs of what to include and exclude (to negate a path, prefix it with `!`) In addition you can speific a filter function. This can, for example, watch the files that changed and edit an enviornment variable. Then the filter function can read the env variable when the task is kicked off and only add the files that changed.  
+
+
+```js
+files: {
+  expand: true,
+  // src: ["test/fixtures/update/simple/**/*.js"]
+  src: ["test/fixtures/update/simple/**/*.js", "!test/fixtures/update/simple/a.js"],
+  filter: function(path) {
+    return path.search("b.js") === -1;
+  }
+},
+```
+
 
 ### Usage Example
 
@@ -62,7 +94,7 @@ grunt.initConfig({
   jsdeps: {
     simple: {
       options: {
-        root: ".",
+        pathPrefix: ".",
         sourcePath: "test/fixtures/simple",
         format: "json",
         dest: "./tmp/simple.json"
@@ -101,15 +133,15 @@ and the destination file looks like this:
 ]
 ```
 
-#### Relative Root example
-In this example the following options are used
+#### Relative path example
+In this example the pathPrefix is set to remove the prefix "test/fixtures" from the generated file 
 
 ```js
 grunt.initConfig({
   jsdeps: {
     simple: {
       options: {
-        root: "test/fixtures",
+        pathPrefix: "test/fixtures",
         sourcePath: "test/fixtures/simple",
         format: "json",
         dest: "./tmp/simple.json"
@@ -157,7 +189,7 @@ grunt.initConfig({
   jsdeps: {
     xml: {
       options: {
-        root: ".",
+        pathPrefix: ".",
         sourcePath: "test/fixtures/simple",
         format: "xml",
         dest: "./tmp/simple.xml"

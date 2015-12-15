@@ -32,8 +32,8 @@
     return matchAll(file, REF_REGEX);
   };
 
-  var getRootRelativePath = function (root, absolutePath) {
-    return "/" + path.relative(root, absolutePath).replace(/\\/g, "/");
+  var getPrefixRelativePath = function (prefix, absolutePath) {
+    return "/" + path.relative(prefix, absolutePath).replace(/\\/g, "/");
   };
 
   var processFile = function (absolutePath, options, depTree) {
@@ -53,15 +53,15 @@
       }
     });
 
-    depTree[getRootRelativePath(options.root, absolutePath)] = refs
-      .map(function (x) { return getRootRelativePath(options.root, x); });
+    depTree[getPrefixRelativePath(options.pathPrefix, absolutePath)] = refs
+      .map(function (x) { return getPrefixRelativePath(options.pathPrefix, x); });
   };
 
   var isDirectoryIgnored = function (absolutePath) {
     return grunt.file.isFile(absolutePath, "jslignore.txt");
   };
 
-  var formatXml = function(depTree) {
+  var createXMLStringFromTree = function(depTree) {
     var xml = "<?xml version=\"1.0\"?>\n" +
     "<dependencies xmlns=\"http://schemas.vistaprint.com/VP.Cap.Dev.JavaScriptDependencies.Dependency.xsd\">\n";
 
@@ -76,7 +76,9 @@
     return xml;
   };
 
-  var formatJson = function(depTree) {
+  var createJSONStringFromTree = function(depTree) {
+    // Takes a depTree: {"a.js":["b.js","c.js"], "b.js":["d.js"]} 
+    // returns formatedDepTree as json string: '[{source:"a.js", dependencies:["b.js","c.js"]},{source:"b.js", dependencies:["d.js"]}]'
     var formatedDepTree = [];
     for (var dep in depTree) {
       if( depTree.hasOwnProperty(dep) ) {
@@ -85,36 +87,51 @@
     }
     return JSON.stringify(formatedDepTree, null, 2) + "\n";
   };
-
+  var readDependencyTree = function(formatedDepTree) {
+    // this method reads json constructed by createJSONStringFromTree and returns a depTree
+    var depTree = {};
+    formatedDepTree.forEach(function(dep){
+      depTree[dep.source] = dep.dependencies;
+    });
+    return depTree;
+  };
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
 
-  grunt.registerMultiTask('jsdeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
+  grunt.registerMultiTask('create_jsdeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options({
-      root: ".",
+      pathPrefix: ".",
       sourcePath: ".",
       format: "json",
       dest: "./dependency-tree.json"
     });
-  grunt.verbose.subhead(options);
-  var files = [];
-  var depTree = {};
+    grunt.verbose.subhead(options);
+    var depTree = {};
 
-  try {
-    fsutil.recurseDirSync(
-      options.sourcePath,
-      function (x) {
-        files.push(x);
-        processFile(x, options, depTree);
-      },
-      function (x) { return !isDirectoryIgnored(x); }
-      );
-  } catch (ex) {
-    grunt.fatal(ex.message + "\n");
-    return -1;
-  }
-  grunt.file.write(options.dest, options.format==="xml" ? formatXml(depTree) : formatJson(depTree));
-});
+    try {
+      fsutil.recurseDirSync(
+        options.sourcePath,
+        function (x) {
+          processFile(x, options, depTree);
+        },
+        function (x) { return !isDirectoryIgnored(x); }
+        );
+    } catch (ex) {
+      grunt.fatal(ex.message + "\n");
+      return -1;
+    }
+    grunt.file.write(options.dest, options.format==="xml" ? createXMLStringFromTree(depTree) : createJSONStringFromTree(depTree));
+  });
+
+  grunt.registerMultiTask('update_jsdeps', 'Build a dependency tree from js files with microsoft type depenencies. Currently only supports reading in json', function() {
+    // Merge task-specific and/or target-specific options with these defaults.
+    var options = this.options();
+    var files = grunt.file.expand(this.data.files,this.data.files.src);
+    var depTree = readDependencyTree(grunt.file.readJSON(options.dependencyTree));
+    var dest = options.dest || options.dependencyTree;
+    files.forEach(function(file){processFile(file, options, depTree);});
+    grunt.file.write(dest, createJSONStringFromTree(depTree));
+  });
 };

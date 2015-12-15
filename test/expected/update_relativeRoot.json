@@ -1,0 +1,15 @@
+[
+  {
+    "source": "/a.js",
+    "dependencies": [
+      "/b.js",
+      "/folder/c.js"
+    ]
+  },
+  {
+    "source": "/folder/c.js",
+    "dependencies": [
+      "/folder/d.js"
+    ]
+  }
+]
