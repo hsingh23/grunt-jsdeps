@@ -29,10 +29,39 @@ module.exports = function(grunt) {
     },
 
     // Configuration to be run (and then tested).
-    jsdeps: {
+    update_jsdeps: {
+      // currently we can only read in json
+      simple: {
+        files: {
+          expand: true,
+          src: ["test/fixtures/update/simple/**/*.js", "!test/fixtures/update/simple/a.js"],
+          filter: function(path) {
+            return path.search("b.js") === -1;
+          }
+        },
+        options: {
+          dependencyTree: "test/fixtures/update/simple/simple.json",
+          dest: "./tmp/update_simple.json",
+          format: "<%= create_jsdeps.simple.options.format %>",
+          pathPrefix: "."
+        }
+      },
+      relativeRoot: {
+        files: {
+          expand: true,
+          src: ["test/fixtures/update/simple/**/*.js"],
+        },
+        options: {
+          dependencyTree: "test/fixtures/update/simple/relativeRoot.json",
+          dest: "./tmp/update_relativeRoot.json",
+          pathPrefix: "test/fixtures/update/simple",
+        }
+      }
+    },
+    create_jsdeps: {
       simple: {
         options: {
-          root: ".",
+          pathPrefix: ".",
           sourcePath: "test/fixtures/simple",
           format: "json",
           dest: "./tmp/simple.json"
@@ -40,7 +69,7 @@ module.exports = function(grunt) {
       },
       relativeRoot: {
         options: {
-          root: "test/fixtures/",
+          pathPrefix: "test/fixtures/",
           sourcePath: "test/fixtures/simple",
           format: "json",
           dest: "./tmp/relativeRoot.json"
@@ -48,7 +77,7 @@ module.exports = function(grunt) {
       },
       xml: {
         options: {
-          root: ".",
+          pathPrefix: ".",
           sourcePath: "test/fixtures/simple",
           format: "xml",
           dest: "./tmp/simple.xml"
@@ -60,7 +89,6 @@ module.exports = function(grunt) {
     nodeunit: {
       tests: ['test/*_test.js']
     }
-
   });
 
   // Actually load this plugin's task(s).
@@ -73,6 +101,7 @@ module.exports = function(grunt) {
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
+  grunt.registerTask('jsdeps', ['create_jsdeps', 'update_jsdeps']);
   grunt.registerTask('test', ['clean', 'jsdeps', 'nodeunit']);
 
   // By default, lint and run all tests.

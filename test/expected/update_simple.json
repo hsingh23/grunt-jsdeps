@@ -1,0 +1,15 @@
+[
+  {
+    "source": "/test/fixtures/update/simple/a.js",
+    "dependencies": [
+      "/test/fixtures/update/simple/b.js",
+      "/test/fixtures/update/simple/folder/c.js"
+    ]
+  },
+  {
+    "source": "/test/fixtures/update/simple/folder/c.js",
+    "dependencies": [
+      "/test/fixtures/update/simple/folder/d.js"
+    ]
+  }
+]
