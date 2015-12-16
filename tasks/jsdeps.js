@@ -99,7 +99,7 @@
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
 
-  grunt.registerMultiTask('create_jsdeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
+  grunt.registerMultiTask('createJSDeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options({
       pathPrefix: ".",
@@ -125,7 +125,7 @@
     grunt.file.write(options.dest, options.format==="xml" ? createXMLStringFromTree(depTree) : createJSONStringFromTree(depTree));
   });
 
-  grunt.registerMultiTask('update_jsdeps', 'Build a dependency tree from js files with microsoft type depenencies. Currently only supports reading in json', function() {
+  grunt.registerMultiTask('updateJSDeps', 'Build a dependency tree from js files with microsoft type depenencies. Currently only supports reading in json', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options();
     var files = grunt.file.expand(this.data.files,this.data.files.src);
