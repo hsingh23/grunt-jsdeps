@@ -29,7 +29,7 @@ module.exports = function(grunt) {
     },
 
     // Configuration to be run (and then tested).
-    update_jsdeps: {
+    updateJSDeps: {
       // currently we can only read in json
       simple: {
         files: {
@@ -42,7 +42,7 @@ module.exports = function(grunt) {
         options: {
           dependencyTree: "test/fixtures/update/simple/simple.json",
           dest: "./tmp/update_simple.json",
-          format: "<%= create_jsdeps.simple.options.format %>",
+          format: "<%= createJSDeps.simple.options.format %>",
           pathPrefix: "."
         }
       },
@@ -58,7 +58,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    create_jsdeps: {
+    createJSDeps: {
       simple: {
         options: {
           pathPrefix: ".",
@@ -101,7 +101,7 @@ module.exports = function(grunt) {
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('jsdeps', ['create_jsdeps', 'update_jsdeps']);
+  grunt.registerTask('jsdeps', ['createJSDeps', 'updateJSDeps']);
   grunt.registerTask('test', ['clean', 'jsdeps', 'nodeunit']);
 
   // By default, lint and run all tests.
