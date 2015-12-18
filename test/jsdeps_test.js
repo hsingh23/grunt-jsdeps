@@ -21,7 +21,7 @@ var grunt = require('grunt');
     test.ifError(value)
 */
 
-exports.create_jsdeps = {
+exports.createJSDeps = {
   setUp: function(done) {
     // setup here if necessary
     done();
@@ -49,7 +49,7 @@ exports.create_jsdeps = {
   }
 };
 
-exports.update_jsdeps = {
+exports.updateJSDeps = {
   setUp: function(done) {
     // setup here if necessary
     done();
