@@ -104,13 +104,26 @@ module.exports = function(grunt) {
         });
         return depTree;
     };
+    var update = function(that) {
+        var options = that.options({
+            pathPrefix: "."
+        });
+        var files = grunt.file.expand(options.files, options.files.src);
+        var depTree = readDependencyTree(grunt.file.readJSON(options.dependencyTree));
+        var beforeDepTree = JSON.stringify(depTree);
+        var dest = options.dest || options.dependencyTree;
+        files.forEach(function(file) {
+            processFile(file, options, depTree);
+        });
+        if ( beforeDepTree !== JSON.stringify(depTree)) {
+            grunt.log.writeln("Updating " + dest);
+            grunt.file.write(dest, createJSONStringFromTree(depTree));
+        }
+    };
 
-    // Please see the Grunt documentation for more information regarding task
-    // creation: http://gruntjs.com/creating-tasks
-
-    grunt.registerMultiTask('createJSDeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
+    var create = function(that) {
         // Merge task-specific and/or target-specific options with these defaults.
-        var options = this.options({
+        var options = that.options({
             pathPrefix: ".",
             sourcePath: ".",
             format: "json",
@@ -134,19 +147,28 @@ module.exports = function(grunt) {
             return -1;
         }
         grunt.file.write(options.dest, options.format === "xml" ? createXMLStringFromTree(depTree) : createJSONStringFromTree(depTree));
+    };
+
+    // Please see the Grunt documentation for more information regarding task
+    // creation: http://gruntjs.com/creating-tasks
+
+    grunt.registerMultiTask('createJSDeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
+        create(this);
+    });
+
+    grunt.registerMultiTask('asyncCreateJSDeps', 'Build a dependency tree from js files with microsoft type depenencies', function() {
+        var done = this.async();
+        create(this);
+        done();
     });
 
     grunt.registerMultiTask('updateJSDeps', 'Build a dependency tree from js files with microsoft type depenencies. Currently only supports reading in json', function() {
-        // Merge task-specific and/or target-specific options with these defaults.
-        var options = this.options({
-            pathPrefix: "."
-        });
-        var files = grunt.file.expand(options.files, options.files.src);
-        var depTree = readDependencyTree(grunt.file.readJSON(options.dependencyTree));
-        var dest = options.dest || options.dependencyTree;
-        files.forEach(function(file) {
-            processFile(file, options, depTree);
-        });
-        grunt.file.write(dest, createJSONStringFromTree(depTree));
+        update(this);
+    });
+
+    grunt.registerMultiTask('asyncUpdateJSDeps', 'Build a dependency tree from js files with microsoft type depenencies. Currently only supports reading in json', function() {
+        var done = this.async();
+        update(this);
+        done();
     });
 };
