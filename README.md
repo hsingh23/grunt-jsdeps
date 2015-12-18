@@ -17,14 +17,14 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-jsdeps');
 ```
 
-## The "jsdeps" task
+## The "createJSDeps" task
 
 ### Overview
-In your project's Gruntfile, add a section named `jsdeps` to the data object passed into `grunt.initConfig()`.
+In your project's Gruntfile, add a section named `jsdeps` to the data object passed into `grunt.initConfig()`. Note there is also an async version of this task called asyncCreateJSDeps
 
 ```js
 grunt.initConfig({
-  jsdeps: {
+  createJSDeps: {
     your_target: {
       // Target-specific file lists and/or options go here.
       options: {
@@ -68,6 +68,7 @@ Default value: `./dependency-tree.json`
 The place the output file is written.
 
 ### Update Task comments
+The update task is `updateJSDeps` and `asyncUpdateJSDeps`
 
 The update task doesn't take a sourcePath, rather it takes a list of files that have changed. The `files.src` is a list of globs of what to include and exclude (to negate a path, prefix it with `!`) In addition you can speific a filter function. This can, for example, watch the files that changed and edit an enviornment variable. Then the filter function can read the env variable when the task is kicked off and only add the files that changed.  
 
