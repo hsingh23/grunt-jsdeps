@@ -15,14 +15,14 @@ module.exports = function(grunt) {
     var REF_REGEX = /\/\/\/\s*<reference\s+path\s*=\s*["'](.*?)["']/gim;
     var matchAll = function(str, regex) {
         var res = [];
-        var m;
+        var currentMatch;
         if (regex.global) {
-            while (m = regex.exec(str)) {
-                res.push(m[1]);
+            while (currentMatch = regex.exec(str)) {
+                res.push(currentMatch[1]);
             }
         } else {
-            if (m = regex.exec(str)) {
-                res.push(m[1]);
+            if (currentMatch = regex.exec(str)) {
+                res.push(currentMatch[1]);
             }
         }
         return res;
@@ -36,8 +36,7 @@ module.exports = function(grunt) {
         return "/" + path.relative(prefix, absolutePath).replace(/\\/g, "/");
     };
 
-    var processFile = function(absolutePath, options, depTree) {
-
+    var processFile = function(absolutePath, options, sourcePathToDependencies) {
         var parentDirectory = path.dirname(absolutePath);
 
         var refs = getReferences(absolutePath)
@@ -55,9 +54,10 @@ module.exports = function(grunt) {
             }
         });
 
-        depTree[getPrefixRelativePath(options.pathPrefix, absolutePath)] = refs
-            .map(function(x) {
-                return getPrefixRelativePath(options.pathPrefix, x);
+        var sourcePath = getPrefixRelativePath(options.pathPrefix, absolutePath);
+        delete sourcePathToDependencies[sourcePath];
+        sourcePathToDependencies[sourcePath] = refs.map(function(referencePath) {
+                return getPrefixRelativePath(options.pathPrefix, referencePath);
             });
     };
 
@@ -65,15 +65,15 @@ module.exports = function(grunt) {
         return grunt.file.isFile(absolutePath, "jslignore.txt");
     };
 
-    var createXMLStringFromTree = function(depTree) {
+    var createXMLStringFromTree = function(sourcePathToDependencies) {
         var xml = "<?xml version=\"1.0\"?>\n" +
             "<dependencies xmlns=\"http://schemas.vistaprint.com/VP.Cap.Dev.JavaScriptDependencies.Dependency.xsd\">\n";
 
-        for (var f in depTree) {
-            xml += "  <file path=\"" + f + "\">\n";
+        for (var sourcePath in sourcePathToDependencies) {
+            xml += "  <file path=\"" + sourcePath + "\">\n";
             /*jshint -W083 */
-            xml += depTree[f].map(function(x) {
-                    return "    <dependency>" + x + "</dependency>";
+            xml += sourcePathToDependencies[sourcePath].map(function(dependencyPath) {
+                    return "    <dependency>" + dependencyPath + "</dependency>";
                 }).join("\n") + "\n";
             xml += "  </file>\n";
         }
@@ -82,42 +82,45 @@ module.exports = function(grunt) {
         return xml;
     };
 
-    var createJSONStringFromTree = function(depTree) {
-        // Takes a depTree: {"a.js":["b.js","c.js"], "b.js":["d.js"]} 
-        // returns formatedDepTree as json string: '[{source:"a.js", dependencies:["b.js","c.js"]},{source:"b.js", dependencies:["d.js"]}]'
-        var formatedDepTree = [];
-        for (var dep in depTree) {
-            if (depTree.hasOwnProperty(dep)) {
-                formatedDepTree.push({
-                    source: dep,
-                    dependencies: depTree[dep]
+    var createJSONStringFromTree = function(sourcePathToDependencies) {
+        // Takes a sourcePathToDependencies: {"a.js":["b.js","c.js"], "b.js":["d.js"]} 
+        // returns formatedSourcePathToDependencies as json string: '[{source:"a.js", dependencies:["b.js","c.js"]},{source:"b.js", dependencies:["d.js"]}]'
+        var formatedSourcePathToDependencies = [];
+        var spaces = 2;
+        for (var sourcePath in sourcePathToDependencies) {
+            if (sourcePathToDependencies.hasOwnProperty(sourcePath)) {
+                formatedSourcePathToDependencies.push({
+                    source: sourcePath,
+                    dependencies: sourcePathToDependencies[sourcePath]
                 });
             }
         }
-        return JSON.stringify(formatedDepTree, null, 2) + "\n";
+        return JSON.stringify(formatedSourcePathToDependencies, null, spaces) + "\n";
     };
-    var readDependencyTree = function(formatedDepTree) {
-        // this method reads json constructed by createJSONStringFromTree and returns a depTree
-        var depTree = {};
-        formatedDepTree.forEach(function(dep) {
-            depTree[dep.source] = dep.dependencies;
+
+    var readDependencyTree = function(formatedSourcePathToDependencies) {
+        // Reads json constructed by createJSONStringFromTree and returns a sourcePathToDependencies
+        var sourcePathToDependencies = {};
+        formatedSourcePathToDependencies.forEach(function(dependencyData) {
+            sourcePathToDependencies[dependencyData.source] = dependencyData.dependencies;
         });
-        return depTree;
+        return sourcePathToDependencies;
     };
+
     var update = function(that) {
         var options = that.options({
             pathPrefix: "."
         });
         var files = grunt.file.expand(options.files, options.files.src);
-        var depTree = readDependencyTree(grunt.file.readJSON(options.dependencyTree));
-        var beforeDepTree = JSON.stringify(depTree);
-        var dest = options.dest || options.dependencyTree;
+        var sourcePathToDependencies = readDependencyTree(grunt.file.readJSON(options.dependencyTree));
+        var beforeSourcePathToDependencies = JSON.stringify(sourcePathToDependencies);
+        var dest = options.dest || options.dependencyTree; // If destination is not set, rewrite the dependency file
         files.forEach(function(file) {
-            processFile(file, options, depTree);
+            processFile(file, options, sourcePathToDependencies);
         });
-        if ( beforeDepTree !== JSON.stringify(depTree)) {
+        if ( beforeSourcePathToDependencies !== JSON.stringify(sourcePathToDependencies)) {
             grunt.log.writeln("Updating " + dest);
-            grunt.file.write(dest, createJSONStringFromTree(depTree));
+            grunt.file.write(dest, createJSONStringFromTree(sourcePathToDependencies));
         }
     };
 
@@ -130,23 +133,23 @@ module.exports = function(grunt) {
             dest: "./dependency-tree.json"
         });
         grunt.verbose.subhead(options);
-        var depTree = {};
+        var sourcePathToDependencies = {};
 
         try {
             fsutil.recurseDirSync(
                 options.sourcePath,
-                function(x) {
-                    processFile(x, options, depTree);
+                function(sourcePath) {
+                    processFile(sourcePath, options, sourcePathToDependencies);
                 },
-                function(x) {
-                    return !isDirectoryIgnored(x);
+                function(sourcePath) {
+                    return !isDirectoryIgnored(sourcePath);
                 }
             );
         } catch (ex) {
             grunt.fatal(ex.message + "\n");
             return -1;
         }
-        grunt.file.write(options.dest, options.format === "xml" ? createXMLStringFromTree(depTree) : createJSONStringFromTree(depTree));
+        grunt.file.write(options.dest, options.format === "xml" ? createXMLStringFromTree(sourcePathToDependencies) : createJSONStringFromTree(sourcePathToDependencies));
     };
 
     // Please see the Grunt documentation for more information regarding task
