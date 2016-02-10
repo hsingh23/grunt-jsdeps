@@ -37,26 +37,26 @@ module.exports = function(grunt) {
     };
 
     var processFile = function(absolutePath, options, sourcePathToDependencies) {
+        var sourcePath = getPrefixRelativePath(options.pathPrefix, absolutePath);
+        delete sourcePathToDependencies[sourcePath];
+        
         var parentDirectory = path.dirname(absolutePath);
 
-        var refs = getReferences(absolutePath)
-            .map(function(x) {
-                return path.resolve(parentDirectory, x);
+        var dependencies = getReferences(absolutePath).map(function(dependency) {
+                return path.resolve(parentDirectory, dependency);
             });
 
-        if (refs.length === 0) {
+        if (dependencies.length === 0) {
             return;
         }
 
-        refs.forEach(function(x) {
-            if (!grunt.file.isFile(x)) {
-                grunt.warn("'" + x + "'' cannot be not found\n(referenced from '" + absolutePath + "'')");
+        dependencies.map(function(dependency) {
+            if (!grunt.file.isFile(dependency)) {
+                grunt.warn("'" + dependency + "'' cannot be not found\n(referenced from '" + absolutePath + "'')");
             }
         });
 
-        var sourcePath = getPrefixRelativePath(options.pathPrefix, absolutePath);
-        delete sourcePathToDependencies[sourcePath];
-        sourcePathToDependencies[sourcePath] = refs.map(function(referencePath) {
+        sourcePathToDependencies[sourcePath] = dependencies.map(function(referencePath) {
                 return getPrefixRelativePath(options.pathPrefix, referencePath);
             });
     };
