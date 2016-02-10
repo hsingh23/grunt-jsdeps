@@ -67,5 +67,12 @@ exports.updateJSDeps = {
     var expected = grunt.file.read('test/expected/update_relativeRoot.json');
     test.equal(actual, expected, 'should describe what the default behavior is.');
     test.done();
-  }
+  },
+  removeFile: function(test) {
+    test.expect(1);
+    var actual = grunt.file.read('tmp/update_remove_file.json');
+    var expected = grunt.file.read('test/expected/update_simple.json');
+    test.equal(actual, expected, 'should describe what the default behavior is.');
+    test.done();
+  },
 };
