@@ -45,6 +45,20 @@ module.exports = function(grunt) {
                     pathPrefix: "."
                 }
             },
+            removeFile: {
+                options: {
+                    files: {
+                        expand: true,
+                        src: ["test/fixtures/update/simple/**/*.js", "!test/fixtures/update/simple/a.js"],
+                        filter: function(path) {
+                            return path.search("b.js") === -1;
+                        }
+                    },
+                    dependencyTree: "test/fixtures/update/simple/removeFile.json",
+                    dest: "./tmp/update_remove_file.json",
+                    pathPrefix: "."
+                }
+            },
             relativeRoot: {
                 options: {
                     files: {
