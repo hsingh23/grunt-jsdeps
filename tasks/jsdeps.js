@@ -7,37 +7,41 @@
  */
 
 'use strict';
-var path = require("path");
 var jsdeps = require("jsdeps");
-
-var fsutil = require("./file-system-util");
 
 module.exports = function(grunt) {
     var update = function(that) {
-        var options = that.options({
-            pathPrefix: "."
-        });
-        var files = grunt.file.expand(options.files, options.files.src);
-        var beforeSourcePathToDependencies = grunt.file.read(options.dependencyTree);
-        var sourcePathToDependencies = jsdeps.updateDependencies(options, files, options.dependencyTree);
-        var dest = options.dest || options.dependencyTree; // If destination is not set, rewrite the dependency file
-        
-        if ( beforeSourcePathToDependencies !== JSON.stringify(sourcePathToDependencies)) {
-            grunt.log.writeln("Updating " + dest);
-            grunt.file.write(dest, sourcePathToDependencies);
+        try {
+            var options = that.options({
+                pathPrefix: "."
+            });
+            var files = grunt.file.expand(options.files, options.files.src);
+            var beforeSourcePathToDependencies = grunt.file.read(options.dependencyTree);
+            var sourcePathToDependencies = jsdeps.updateDependencies(options, files, options.dependencyTree);
+            var dest = options.dest || options.dependencyTree; // If destination is not set, rewrite the dependency file
+            
+            if ( beforeSourcePathToDependencies !== JSON.stringify(sourcePathToDependencies)) {
+                grunt.log.writeln("Updating " + dest);
+                grunt.file.write(dest, sourcePathToDependencies);
+            }
+        } catch(e) {
+            grunt.fatal(e);
         }
     };
 
     var create = function(that) {
         // Merge task-specific and/or target-specific options with these defaults.
-        var options = that.options({
-            pathPrefix: ".",
-            sourcePath: ".",
-            format: "json",
-            dest: "./dependency-tree.json"
-        });
-        
-        grunt.file.write(options.dest, jsdeps.buildDependencies(options));
+        try {
+            var options = that.options({
+                pathPrefix: ".",
+                sourcePath: ".",
+                format: "json",
+                dest: "./dependency-tree.json"
+            });
+            grunt.file.write(options.dest, jsdeps.buildDependencies(options));
+        } catch(e) {
+            grunt.fatal(e);
+        }
     };
 
     // Please see the Grunt documentation for more information regarding task
