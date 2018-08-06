@@ -1,5 +1,7 @@
 # grunt-jsdeps
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/hsingh23/grunt-jsdeps.svg)](https://greenkeeper.io/)
+
 > Build a dependency tree from js files with microsoft type dependencies
 
 ## Getting Started
