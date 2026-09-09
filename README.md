@@ -1,111 +1,94 @@
 # grunt-jsdeps
 
-> Build a dependency tree from js files with microsoft type dependencies
+> **Status: archived / legacy.** This is a Grunt-era (2015–2016) plugin, kept
+> for historical reference and for builds that still run Grunt 0.4–1.x on
+> legacy Node toolchains. It is not actively developed. For new projects,
+> prefer modern bundlers/dependency analyzers (e.g. eslint-plugin-import,
+> madge, or your bundler's dependency graph). See [CHANGELOG.md](CHANGELOG.md)
+> for the full release history and the
+> [architectural diary](architectural-diary/main.md) for design context.
 
-## Getting Started
-This plugin requires Grunt `~0.4.5`
+## What and why
 
-If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
+`grunt-jsdeps` is a [Grunt](http://gruntjs.com/) plugin that builds a
+**dependency tree from JavaScript files** that declare their dependencies with
+Microsoft-style reference tags:
+
+```js
+/// <reference path="b.js" />
+```
+
+This reference-tag convention comes from legacy Visual Studio / MSBuild-era
+JavaScript projects, where scripts were loaded via generated `<script>` lists
+rather than modules. The plugin scans a source tree, resolves every
+`/// <reference path="..." />` directive, and writes the resulting graph to a
+JSON (or XML) file that build scripts could consume to emit scripts in
+dependency order.
+
+The plugin is a **thin wrapper** around the core [`jsdeps`](https://www.npmjs.com/package/jsdeps)
+npm package: Grunt handles option merging, file expansion, and task
+lifecycle, while `jsdeps.buildDependencies` / `jsdeps.updateDependencies` do
+the actual graph work.
+
+## Features
+
+- **Full-build task** (`createJSDeps`) — recursively scans `sourcePath`,
+  resolves reference tags, writes the whole tree as JSON or XML.
+- **Incremental update task** (`updateJSDeps`) — reads an existing JSON tree
+  and re-processes only the files matched by change-driven globs/filters;
+  entries for files whose references were removed are pruned.
+- **Async variants** (`asyncCreateJSDeps`, `asyncUpdateJSDeps`) — the same
+  tasks wrapped for Grunt's async task protocol (`this.async()`), suitable
+  for watch-style pipelines.
+- **Configurable path prefixing** (`pathPrefix`) to strip a leading path
+  segment from all emitted paths.
+- **Failure behavior** — exceptions thrown by the `jsdeps` library are caught
+  and routed to `grunt.fatal`, failing the build cleanly.
+
+## Stack
+
+- **Runtime:** Node.js (`>= 0.8.0` per `package.json` engines; realistically
+  the legacy 0.10–8.x era), Grunt `>=0.4.5` as a peer dependency
+  (grunt `~1.0.1` for development).
+- **Core logic:** [`jsdeps`](https://www.npmjs.com/package/jsdeps) `^1.0.2`
+  (dependency scanning and tree serialization).
+- **Tooling:** `grunt-contrib-jshint` (lint), `grunt-contrib-clean`,
+  `grunt-contrib-nodeunit` + `grunt-run-task` (tests), jshint via `.jshintrc`.
+- **Language:** plain ES5 JavaScript, CommonJS modules.
+
+## Quickstart
+
+Install (Grunt `~0.4.5` through `1.x`):
 
 ```shell
 npm install grunt-jsdeps --save
 ```
 
-Once the plugin has been installed, it may be enabled inside your Gruntfile with this line of JavaScript:
+Enable in your Gruntfile:
 
 ```js
 grunt.loadNpmTasks('grunt-jsdeps');
 ```
 
-## The "createJSDeps" task
-
-### Overview
-In your project's Gruntfile, add a section named `jsdeps` to the data object passed into `grunt.initConfig()`. Note there is also an async version of this task called asyncCreateJSDeps
+Configure a full build:
 
 ```js
 grunt.initConfig({
   createJSDeps: {
-    your_target: {
-      // Target-specific file lists and/or options go here.
-      options: {
-        pathPrefix: ".", // from where the directory starts
-        sourcePath: "test/fixtures/simple", // dir where your js files are stored - they will be recursively scanned
-        format: "json", // can also be xml
-        dest: "./tmp/simple.json" // name of destination file or path to it
-      }
-    },
-  },
-});
-```
-
-### Options
-
-#### options.pathPrefix
-Type: `String`
-Default value: `.`
-
-A string path of what to exclude when writing the path. For example: with pathPrefix = '/test/fixtures/simple/', the path "/test/fixtures/simple/b.js" will be written as "/b.js"
-
-
-#### options.sourcePath
-Type: `String`
-Default value: `.`
-
-A string path of the root directory to scan to find js files
-
-
-#### options.format
-Type: `String`
-Default value: `json`
-
-Can be either json or xml. The xml option is not currently supported by the update multitask.
-
-
-#### options.dest
-Type: `String`
-Default value: `./dependency-tree.json`
-
-The place the output file is written.
-
-### Update Task comments
-The update task is `updateJSDeps` and `asyncUpdateJSDeps`
-
-The update task doesn't take a sourcePath, rather it takes a list of files that have changed. The `files.src` is a list of globs of what to include and exclude (to negate a path, prefix it with `!`) In addition you can speific a filter function. This can, for example, watch the files that changed and edit an enviornment variable. Then the filter function can read the env variable when the task is kicked off and only add the files that changed.  
-
-
-```js
-files: {
-  expand: true,
-  // src: ["test/fixtures/update/simple/**/*.js"]
-  src: ["test/fixtures/update/simple/**/*.js", "!test/fixtures/update/simple/a.js"],
-  filter: function(path) {
-    return path.search("b.js") === -1;
-  }
-},
-```
-
-
-### Usage Example
-
-#### Simple case
-In this example the following options are used
-
-```js
-grunt.initConfig({
-  jsdeps: {
     simple: {
       options: {
-        pathPrefix: ".",
-        sourcePath: "test/fixtures/simple",
-        format: "json",
-        dest: "./tmp/simple.json"
+        pathPrefix: ".",                // prefix stripped from emitted paths
+        sourcePath: "test/fixtures/simple", // root dir scanned recursively
+        format: "json",                 // "json" or "xml"
+        dest: "./tmp/simple.json"       // output file
       }
     }
   }
 });
 ```
 
-where the following files have these references
+Given these references:
+
 ```shell
 test/fixtures/simple/a.js
 1:/// <reference path="b.js" />
@@ -115,7 +98,8 @@ test/fixtures/simple/folder/c.js
 1:/// <reference path="d.js" />
 ```
 
-and the destination file looks like this:
+the output file looks like:
+
 ```json
 [
   {
@@ -134,91 +118,83 @@ and the destination file looks like this:
 ]
 ```
 
-#### Relative path example
-In this example the pathPrefix is set to remove the prefix "test/fixtures" from the generated file 
+### Options (`createJSDeps` / `asyncCreateJSDeps`)
+
+#### options.pathPrefix
+Type: `String` — Default: `.`
+
+Path prefix excluded when writing paths. With `pathPrefix:
+'/test/fixtures/simple/'`, the path `/test/fixtures/simple/b.js` is written
+as `/b.js`. (Set it to e.g. `"test/fixtures"` to emit root-relative paths —
+see the `relativeRoot` target in `Gruntfile.js`.)
+
+#### options.sourcePath
+Type: `String` — Default: `.`
+
+Root directory scanned recursively for `.js` files.
+
+#### options.format
+Type: `String` — Default: `json`
+
+Either `json` (array of `{source, dependencies}` records) or `xml`. The XML
+option is not supported by the update multitask.
+
+#### options.dest
+Type: `String` — Default: `./dependency-tree.json`
+
+Destination file for the generated tree.
+
+### Update task (`updateJSDeps` / `asyncUpdateJSDeps`)
+
+The update task takes no `sourcePath`; instead it takes the list of files
+that changed, via `options.files` (standard Grunt file expansion):
 
 ```js
 grunt.initConfig({
-  jsdeps: {
+  updateJSDeps: {
     simple: {
       options: {
-        pathPrefix: "test/fixtures",
-        sourcePath: "test/fixtures/simple",
-        format: "json",
-        dest: "./tmp/simple.json"
+        files: {
+          expand: true,
+          // globs; prefix with ! to negate
+          src: ["test/fixtures/update/simple/**/*.js", "!test/fixtures/update/simple/a.js"],
+          filter: function(path) {
+            return path.search("b.js") === -1; // custom filter fn
+          }
+        },
+        dependencyTree: "test/fixtures/update/simple/simple.json", // existing tree to update
+        dest: "./tmp/update_simple.json",
+        pathPrefix: "."
       }
     }
   }
 });
 ```
 
-where the following files have these references
-```shell
-test/fixtures/simple/a.js
-1:/// <reference path="b.js" />
-2:/// <reference path="folder/c.js" />
+The `filter` function enables change-driven workflows — for example, a
+watcher records changed files into an environment variable and the filter
+selects only those when the task runs. If `dest` is not set, the dependency
+tree file itself is rewritten in place; the task skips writing when nothing
+changed.
 
-test/fixtures/simple/folder/c.js
-1:/// <reference path="d.js" />
-```
-
-and the destination file looks like this:
-```json
-[
-  {
-    "source": "/simple/a.js",
-    "dependencies": [
-      "/simple/b.js",
-      "/simple/folder/c.js"
-    ]
-  },
-  {
-    "source": "/simple/folder/c.js",
-    "dependencies": [
-      "/simple/folder/d.js"
-    ]
-  }
-]
+## Repository structure
 
 ```
-
-#### XML case
-In this example the following options are used
-
-```js
-grunt.initConfig({
-  jsdeps: {
-    xml: {
-      options: {
-        pathPrefix: ".",
-        sourcePath: "test/fixtures/simple",
-        format: "xml",
-        dest: "./tmp/simple.xml"
-      }
-    }
-  }
-});
+Gruntfile.js            – dev tasks: jshint, clean, nodeunit; createJSDeps/updateJSDeps test targets
+tasks/jsdeps.js         – the plugin: registers createJSDeps, updateJSDeps and their async variants
+tasks/file-system-util.js – recursive dir walking / path separators (legacy helper from the CLI era)
+test/jsdeps_test.js     – nodeunit suite comparing generated trees against expected outputs
+test/fixtures/          – simple, broken, and update fixture trees with reference tags
+test/expected/          – golden JSON/XML outputs
+package.json            – plugin manifest; peer dep grunt >=0.4.5, runtime dep jsdeps ^1.0.2
 ```
 
-where the following files have these references
-```shell
-test/fixtures/simple/a.js
-1:/// <reference path="b.js" />
-2:/// <reference path="folder/c.js" />
+## Environment variables
 
-test/fixtures/simple/folder/c.js
-1:/// <reference path="d.js" />
-```
+None. The plugin reads no environment variables; the `options.files.filter`
+hook is the supported way to feed external state (such as a changed-file list
+maintained in an env var by a watcher) into the update task.
 
-and the destination file looks like this:
-```json
-{
-  "/test/fixtures/simple/a.js": [
-    "/test/fixtures/simple/b.js",
-    "/test/fixtures/simple/folder/c.js"
-  ],
-  "/test/fixtures/simple/folder/c.js": [
-    "/test/fixtures/simple/folder/d.js"
-  ]
-}
-```
+## License
+
+MIT — see [LICENSE-MIT](LICENSE-MIT). Original author: Harsh Singh.
